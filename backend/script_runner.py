@@ -18,9 +18,10 @@ class ScriptRunner(QObject):
     error_received = pyqtSignal(str)
     command_completed = pyqtSignal(bool, int)  # success, exit_code
     
-    def __init__(self):
+    def __init__(self, sudo_password=None):
         super().__init__()
         self.logger = logging.getLogger(__name__)
+        self.sudo_password = sudo_password
         self.current_process = None
         
     def run_command(self, command, cwd=None, timeout=300):
@@ -42,12 +43,19 @@ class ScriptRunner(QObject):
             env = os.environ.copy()
             env['DEBIAN_FRONTEND'] = 'noninteractive'
             
+            # Handle sudo commands with password
+            stdin_input = None
+            if command.strip().startswith('sudo') and self.sudo_password:
+                # For sudo commands, provide password via stdin
+                stdin_input = self.sudo_password + '\n'
+            
             # Start process
             self.current_process = subprocess.Popen(
                 command,
                 shell=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
+                stdin=subprocess.PIPE if stdin_input else None,
                 text=True,
                 cwd=cwd,
                 env=env,
@@ -83,6 +91,15 @@ class ScriptRunner(QObject):
             
             stdout_thread.start()
             stderr_thread.start()
+            
+            # Send password to stdin if needed for sudo commands
+            if stdin_input:
+                try:
+                    self.current_process.stdin.write(stdin_input)
+                    self.current_process.stdin.flush()
+                    self.current_process.stdin.close()
+                except Exception as e:
+                    self.logger.warning(f"Failed to send password to stdin: {e}")
             
             # Wait for process to complete
             try:

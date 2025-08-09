@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                             QPushButton, QTableWidget, QTableWidgetItem,
                             QGroupBox, QTextEdit, QHeaderView, QAbstractItemView)
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont
+from PyQt6.QtGui import QFont, QColor
 
 class ResultsWidget(QWidget):
     """Widget for displaying installation results"""
@@ -158,6 +158,8 @@ class ResultsWidget(QWidget):
                            if app.get('status') == 'success'])
         failed_count = len([app for app in results_data.get('applications', []) 
                           if app.get('status') == 'failed'])
+        already_installed_count = len([app for app in results_data.get('applications', []) 
+                                     if app.get('status') == 'already_installed'])
         skipped_count = len([app for app in results_data.get('applications', []) 
                            if app.get('status') == 'skipped'])
         
@@ -165,10 +167,11 @@ class ResultsWidget(QWidget):
         self.total_label.setText(f"Total: {total}")
         self.success_label.setText(f"✅ Success: {success_count}")
         self.failed_label.setText(f"❌ Failed: {failed_count}")
-        self.skipped_label.setText(f"⏭️ Skipped: {skipped_count}")
+        self.skipped_label.setText(f"ℹ️ Already Installed: {already_installed_count}")
         
-        # Calculate and display success rate
-        success_rate = (success_count / total * 100) if total > 0 else 0
+        # Calculate and display success rate (including already installed as successful)
+        total_successful = success_count + already_installed_count
+        success_rate = (total_successful / total * 100) if total > 0 else 0
         self.success_rate_label.setText(f"Success Rate: {success_rate:.1f}%")
         
         # Update time
@@ -194,6 +197,9 @@ class ResultsWidget(QWidget):
             elif status == 'failed':
                 status_text = "❌ Failed"
                 status_color = "#ff3333"
+            elif status == 'already_installed':
+                status_text = "ℹ️ Already Installed"
+                status_color = "#17a2b8"
             elif status == 'skipped':
                 status_text = "⏭️ Skipped"
                 status_color = "#ff9500"
@@ -202,7 +208,7 @@ class ResultsWidget(QWidget):
                 status_color = "#888888"
                 
             status_item = QTableWidgetItem(status_text)
-            status_item.setForeground(status_color)
+            status_item.setForeground(QColor(status_color))
             status_item.setFlags(status_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
             
             # Installation time

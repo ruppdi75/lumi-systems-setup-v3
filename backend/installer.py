@@ -20,13 +20,14 @@ class InstallationManager(QObject):
     installation_completed = pyqtSignal()
     installation_failed = pyqtSignal(str)
     
-    def __init__(self, selected_apps, config):
+    def __init__(self, selected_apps, config, sudo_password=None):
         super().__init__()
         self.selected_apps = selected_apps
         self.config = config
+        self.sudo_password = sudo_password
         self.logger = logging.getLogger(__name__)
         
-        self.script_runner = ScriptRunner()
+        self.script_runner = ScriptRunner(sudo_password)
         self.progress_tracker = ProgressTracker()
         
         self.is_running = False
@@ -96,6 +97,31 @@ class InstallationManager(QObject):
             # Update progress
             self.progress_tracker.start_app_installation(app_name)
             
+            # Force immediate progress update
+            self.update_progress_display()
+            
+            # Check if application is already installed
+            is_already_installed = self.check_if_installed(app_name)
+            
+            if is_already_installed:
+                # Mark as already installed
+                app_result = {
+                    'name': app_name,
+                    'status': 'already_installed',
+                    'time': '00:00',
+                    'error': None,
+                    'details': 'Application is already installed'
+                }
+                self.results['applications'].append(app_result)
+                
+                # Update progress tracker
+                self.progress_tracker.complete_app_installation(app_name, True, "Already installed")
+                self.log_message.emit("INFO", f"ℹ️ {app_name} is already installed - skipping")
+                
+                # Force progress update
+                self.update_progress_display()
+                continue
+            
             # Install the application
             success, error_msg, install_time = self.install_application(app_name, installation_steps.get(app_name, []))
             
@@ -117,6 +143,9 @@ class InstallationManager(QObject):
                 self.progress_tracker.complete_app_installation(app_name, False, error_msg)
                 self.log_message.emit("ERROR", f"❌ {app_name} installation failed: {error_msg}")
                 
+            # Force progress update after completion
+            self.update_progress_display()
+                
         # Complete installation
         self.complete_installation()
         
@@ -133,7 +162,7 @@ class InstallationManager(QObject):
                 
             commands = install_commands[app_name]
             
-            for step_name, command in commands:
+            for i, (step_name, command) in enumerate(commands):
                 if self.should_stop:
                     return False, "Installation stopped by user", self.format_time(time.time() - start_time)
                     
@@ -141,6 +170,13 @@ class InstallationManager(QObject):
                 while self.is_paused and not self.should_stop:
                     time.sleep(0.1)
                     
+                # Update progress tracker with current step
+                step_progress = int((i / len(commands)) * 100)
+                self.progress_tracker.update_app_step(step_name, step_progress)
+                
+                # Force progress update to display current step
+                self.update_progress_display()
+                
                 self.log_message.emit("DEBUG", f"Executing: {step_name}")
                 self.status_updated.emit(f"Installing {app_name}: {step_name}")
                 
@@ -148,8 +184,16 @@ class InstallationManager(QObject):
                 success, output, error = self.script_runner.run_command(command)
                 
                 if not success:
-                    install_time = self.format_time(time.time() - start_time)
-                    return False, f"{step_name} failed: {error}", install_time
+                    # Check if this is a repository-related failure that we can recover from
+                    if self.is_recoverable_error(step_name, error):
+                        self.log_message.emit("WARNING", f"⚠️ {step_name} failed but continuing: {error}")
+                        # Try to clean up any problematic repositories
+                        if "apt update" in command.lower() and "spotify" in error.lower():
+                            self.cleanup_spotify_repository()
+                        continue
+                    else:
+                        install_time = self.format_time(time.time() - start_time)
+                        return False, f"{step_name} failed: {error}", install_time
                     
             install_time = self.format_time(time.time() - start_time)
             return True, None, install_time
@@ -157,91 +201,170 @@ class InstallationManager(QObject):
         except Exception as e:
             install_time = self.format_time(time.time() - start_time)
             return False, str(e), install_time
+    
+    def is_recoverable_error(self, step_name, error):
+        """Check if an error is recoverable and installation can continue"""
+        recoverable_patterns = [
+            "Update package lists",
+            "apt update",
+            "OpenPGP",
+            "NO_PUBKEY",
+            "not signed",
+            "repository",
+            "GPG"
+        ]
+        
+        # Only consider repository/update related steps as recoverable
+        if any(pattern.lower() in step_name.lower() for pattern in ["update", "repository", "gpg", "key"]):
+            return any(pattern.lower() in error.lower() for pattern in recoverable_patterns)
+        
+        return False
+    
+    def cleanup_spotify_repository(self):
+        """Clean up problematic Spotify repository"""
+        try:
+            self.log_message.emit("INFO", "🔧 Cleaning up Spotify repository...")
+            
+            # Remove problematic Spotify sources
+            cleanup_commands = [
+                'sudo rm -f /etc/apt/sources.list.d/spotify.list',
+                'sudo rm -f /etc/apt/trusted.gpg.d/spotify.gpg',
+                'sudo apt update'
+            ]
+            
+            for cmd in cleanup_commands:
+                success, output, error = self.script_runner.run_command(cmd)
+                if not success and "apt update" not in cmd:
+                    self.log_message.emit("WARNING", f"Cleanup command failed: {cmd}")
+                    
+            self.log_message.emit("INFO", "✅ Spotify repository cleanup completed")
+            
+        except Exception as e:
+            self.log_message.emit("ERROR", f"Failed to cleanup Spotify repository: {e}")
+    
+    def check_if_installed(self, app_name):
+        """Check if an application is already installed"""
+        try:
+            # Define check commands for each application
+            check_commands = {
+                'firefox': 'which firefox',
+                'thunderbird': 'which thunderbird',
+                'libreoffice': 'which libreoffice',
+                'gimp': 'which gimp',
+                'vlc': 'which vlc',
+                'code': 'which code',
+                'git': 'which git',
+                'python3': 'which python3',
+                'nodejs': 'which node',
+                'docker': 'which docker',
+                'rustdesk': 'which rustdesk',
+                'steam': 'which steam',
+                'discord': 'flatpak list | grep -i discord',
+                'spotify': 'flatpak list | grep -i spotify',
+                'htop': 'which htop',
+                'curl': 'which curl',
+                'wget': 'which wget',
+                'zip': 'which zip'
+            }
+            
+            if app_name not in check_commands:
+                # If we don't have a check command, assume it's not installed
+                return False
+            
+            command = check_commands[app_name]
+            success, output, error = self.script_runner.run_command(command)
+            
+            # If command succeeds and has output, the application is likely installed
+            return success and output.strip() != ""
+            
+        except Exception as e:
+            self.logger.warning(f"Could not check if {app_name} is installed: {e}")
+            # If we can't check, assume it's not installed to be safe
+            return False
             
     def get_installation_steps(self):
         """Get installation steps for each application"""
         return {
             'firefox': [
-                ('Update package lists', 'apt update'),
-                ('Install Firefox', 'apt install -y firefox'),
+                ('Update package lists', 'sudo apt update'),
+                ('Install Firefox', 'sudo apt install -y firefox'),
             ],
             'thunderbird': [
-                ('Update package lists', 'apt update'),
-                ('Install Thunderbird', 'apt install -y thunderbird'),
+                ('Update package lists', 'sudo apt update'),
+                ('Install Thunderbird', 'sudo apt install -y thunderbird'),
             ],
             'libreoffice': [
-                ('Update package lists', 'apt update'),
-                ('Install LibreOffice', 'apt install -y libreoffice'),
+                ('Update package lists', 'sudo apt update'),
+                ('Install LibreOffice', 'sudo apt install -y libreoffice'),
             ],
             'gimp': [
-                ('Update package lists', 'apt update'),
-                ('Install GIMP', 'apt install -y gimp'),
+                ('Update package lists', 'sudo apt update'),
+                ('Install GIMP', 'sudo apt install -y gimp'),
             ],
             'vlc': [
-                ('Update package lists', 'apt update'),
-                ('Install VLC', 'apt install -y vlc'),
+                ('Update package lists', 'sudo apt update'),
+                ('Install VLC', 'sudo apt install -y vlc'),
             ],
             'code': [
                 ('Add Microsoft GPG key', 'wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg'),
-                ('Install GPG key', 'install -o root -g root -m 644 packages.microsoft.gpg /etc/apt/trusted.gpg.d/'),
-                ('Add VS Code repository', 'echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/trusted.gpg.d/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list'),
-                ('Update package lists', 'apt update'),
-                ('Install VS Code', 'apt install -y code'),
+                ('Install GPG key', 'sudo install -o root -g root -m 644 packages.microsoft.gpg /etc/apt/trusted.gpg.d/'),
+                ('Add VS Code repository', 'echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/trusted.gpg.d/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" | sudo tee /etc/apt/sources.list.d/vscode.list'),
+                ('Update package lists', 'sudo apt update'),
+                ('Install VS Code', 'sudo apt install -y code'),
             ],
             'git': [
-                ('Update package lists', 'apt update'),
-                ('Install Git', 'apt install -y git'),
+                ('Update package lists', 'sudo apt update'),
+                ('Install Git', 'sudo apt install -y git'),
             ],
             'python3': [
-                ('Update package lists', 'apt update'),
-                ('Install Python 3', 'apt install -y python3 python3-pip'),
+                ('Update package lists', 'sudo apt update'),
+                ('Install Python 3', 'sudo apt install -y python3 python3-pip'),
             ],
             'nodejs': [
-                ('Update package lists', 'apt update'),
-                ('Install Node.js', 'apt install -y nodejs npm'),
+                ('Update package lists', 'sudo apt update'),
+                ('Install Node.js', 'sudo apt install -y nodejs npm'),
             ],
             'docker': [
-                ('Update package lists', 'apt update'),
-                ('Install prerequisites', 'apt install -y apt-transport-https ca-certificates curl gnupg lsb-release'),
-                ('Add Docker GPG key', 'curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg'),
-                ('Add Docker repository', 'echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null'),
-                ('Update package lists', 'apt update'),
-                ('Install Docker', 'apt install -y docker-ce docker-ce-cli containerd.io'),
+                ('Update package lists', 'sudo apt update'),
+                ('Install prerequisites', 'sudo apt install -y apt-transport-https ca-certificates curl gnupg lsb-release'),
+                ('Add Docker GPG key', 'curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg'),
+                ('Add Docker repository', 'echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null'),
+                ('Update package lists', 'sudo apt update'),
+                ('Install Docker', 'sudo apt install -y docker-ce docker-ce-cli containerd.io'),
             ],
             'rustdesk': [
                 ('Download RustDesk', 'wget -O /tmp/rustdesk.deb https://github.com/rustdesk/rustdesk/releases/download/1.2.3/rustdesk-1.2.3-x86_64.deb'),
-                ('Install RustDesk', 'dpkg -i /tmp/rustdesk.deb || apt-get install -f -y'),
+                ('Install RustDesk', 'sudo dpkg -i /tmp/rustdesk.deb || sudo apt-get install -f -y'),
             ],
             'steam': [
-                ('Enable multiverse repository', 'add-apt-repository multiverse -y'),
-                ('Update package lists', 'apt update'),
-                ('Install Steam', 'apt install -y steam'),
+                ('Enable multiverse repository', 'sudo add-apt-repository multiverse -y'),
+                ('Update package lists', 'sudo apt update'),
+                ('Install Steam', 'sudo apt install -y steam'),
             ],
             'discord': [
                 ('Download Discord', 'wget -O /tmp/discord.deb "https://discordapp.com/api/download?platform=linux&format=deb"'),
-                ('Install Discord', 'dpkg -i /tmp/discord.deb || apt-get install -f -y'),
+                ('Install Discord', 'sudo dpkg -i /tmp/discord.deb || sudo apt-get install -f -y'),
             ],
             'spotify': [
-                ('Add Spotify GPG key', 'curl -sS https://download.spotify.com/debian/pubkey_7A3A762FAFD4A51F.gpg | gpg --dearmor --yes -o /etc/apt/trusted.gpg.d/spotify.gpg'),
-                ('Add Spotify repository', 'echo "deb http://repository.spotify.com stable non-free" | tee /etc/apt/sources.list.d/spotify.list'),
-                ('Update package lists', 'apt update'),
-                ('Install Spotify', 'apt install -y spotify-client'),
+                ('Install Flatpak if needed', 'sudo apt update && sudo apt install -y flatpak'),
+                ('Add Flathub repository', 'flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo'),
+                ('Install Spotify via Flatpak', 'flatpak install -y flathub com.spotify.Client'),
             ],
             'htop': [
-                ('Update package lists', 'apt update'),
-                ('Install htop', 'apt install -y htop'),
+                ('Update package lists', 'sudo apt update'),
+                ('Install htop', 'sudo apt install -y htop'),
             ],
             'curl': [
-                ('Update package lists', 'apt update'),
-                ('Install curl', 'apt install -y curl'),
+                ('Update package lists', 'sudo apt update'),
+                ('Install curl', 'sudo apt install -y curl'),
             ],
             'wget': [
-                ('Update package lists', 'apt update'),
-                ('Install wget', 'apt install -y wget'),
+                ('Update package lists', 'sudo apt update'),
+                ('Install wget', 'sudo apt install -y wget'),
             ],
             'zip': [
-                ('Update package lists', 'apt update'),
-                ('Install zip utilities', 'apt install -y zip unzip'),
+                ('Update package lists', 'sudo apt update'),
+                ('Install zip utilities', 'sudo apt install -y zip unzip'),
             ],
         }
         

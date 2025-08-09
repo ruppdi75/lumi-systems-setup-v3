@@ -13,6 +13,7 @@ from PyQt6.QtGui import QFont, QPixmap, QAction
 from .progress_widget import ProgressWidget
 from .log_widget import LogWidget
 from .results_widget import ResultsWidget
+from .password_dialog import get_sudo_password
 from backend.installer import InstallationManager
 
 class MainWindow(QMainWindow):
@@ -75,15 +76,7 @@ class MainWindow(QMainWindow):
         title_font.setBold(True)
         title_label.setFont(title_font)
         
-        subtitle_label = QLabel("Modern AnduinOS Software Installer")
-        subtitle_label.setStyleSheet("color: #888888; font-size: 12pt;")
-        
-        title_layout = QVBoxLayout()
-        title_layout.addWidget(title_label)
-        title_layout.addWidget(subtitle_label)
-        title_layout.setSpacing(2)
-        
-        header_layout.addLayout(title_layout)
+        header_layout.addWidget(title_label)
         header_layout.addStretch()
         
         # Control buttons
@@ -126,23 +119,72 @@ class MainWindow(QMainWindow):
         selection_header.setStyleSheet("font-size: 14pt; font-weight: bold; margin-bottom: 10px;")
         selection_layout.addWidget(selection_header)
         
-        # Quick selection buttons
-        quick_buttons_layout = QHBoxLayout()
+        # Quick selection buttons - horizontal layout like tabs
+        buttons_widget = QWidget()
+        buttons_layout = QHBoxLayout(buttons_widget)
+        buttons_layout.setContentsMargins(0, 0, 0, 10)
+        buttons_layout.setSpacing(10)
         
         select_all_btn = QPushButton("Select All")
         select_all_btn.clicked.connect(self.select_all_applications)
+        select_all_btn.setMinimumHeight(30)
+        select_all_btn.setStyleSheet("""
+            QPushButton {
+                font-size: 10pt;
+                font-weight: bold;
+                padding: 5px 15px;
+                background-color: #0d7377;
+                border: none;
+                border-radius: 4px;
+                color: white;
+            }
+            QPushButton:hover {
+                background-color: #14a085;
+            }
+        """)
         
         select_none_btn = QPushButton("Select None")
         select_none_btn.clicked.connect(self.select_no_applications)
+        select_none_btn.setMinimumHeight(30)
+        select_none_btn.setStyleSheet("""
+            QPushButton {
+                font-size: 10pt;
+                font-weight: bold;
+                padding: 5px 15px;
+                background-color: #6c757d;
+                border: none;
+                border-radius: 4px;
+                color: white;
+            }
+            QPushButton:hover {
+                background-color: #5a6268;
+            }
+        """)
         
         select_recommended_btn = QPushButton("Recommended")
         select_recommended_btn.clicked.connect(self.select_recommended_applications)
+        select_recommended_btn.setMinimumHeight(30)
+        select_recommended_btn.setStyleSheet("""
+            QPushButton {
+                font-size: 10pt;
+                font-weight: bold;
+                padding: 5px 15px;
+                background-color: #28a745;
+                border: none;
+                border-radius: 4px;
+                color: white;
+            }
+            QPushButton:hover {
+                background-color: #218838;
+            }
+        """)
         
-        quick_buttons_layout.addWidget(select_all_btn)
-        quick_buttons_layout.addWidget(select_none_btn)
-        quick_buttons_layout.addWidget(select_recommended_btn)
+        buttons_layout.addWidget(select_all_btn)
+        buttons_layout.addWidget(select_none_btn)
+        buttons_layout.addWidget(select_recommended_btn)
+        buttons_layout.addStretch()  # Push buttons to the left
         
-        selection_layout.addLayout(quick_buttons_layout)
+        selection_layout.addWidget(buttons_widget)
         
         # Scrollable application list
         scroll_area = QScrollArea()
@@ -228,8 +270,13 @@ class MainWindow(QMainWindow):
         progress_widget = QWidget()
         progress_layout = QVBoxLayout(progress_widget)
         
+        # Create horizontal layout for tabs and selection buttons
+        top_layout = QHBoxLayout()
+        
         # Create tab widget for different views
         self.tab_widget = QTabWidget()
+        top_layout.addWidget(self.tab_widget)
+        progress_layout.addLayout(top_layout)
         
         # Progress tab
         self.progress_widget = ProgressWidget()
@@ -242,8 +289,6 @@ class MainWindow(QMainWindow):
         # Results tab
         self.results_widget = ResultsWidget()
         self.tab_widget.addTab(self.results_widget, "✅ Results")
-        
-        progress_layout.addWidget(self.tab_widget)
         
         parent_splitter.addWidget(progress_widget)
         
@@ -336,6 +381,15 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "No Selection", 
                               "Please select at least one application to install.")
             return
+        
+        # Prompt for sudo password before starting
+        sudo_password = get_sudo_password(self)
+        if sudo_password is None:
+            # User cancelled password dialog
+            return
+            
+        # Store password for use during installation
+        self.sudo_password = sudo_password
             
         # Update UI state
         self.start_button.setEnabled(False)
@@ -346,7 +400,7 @@ class MainWindow(QMainWindow):
         self.tab_widget.setCurrentIndex(0)
         
         # Start installation in background thread
-        self.installation_manager = InstallationManager(selected_apps, self.config)
+        self.installation_manager = InstallationManager(selected_apps, self.config, self.sudo_password)
         self.installation_thread = QThread()
         
         self.installation_manager.moveToThread(self.installation_thread)

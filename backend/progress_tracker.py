@@ -61,9 +61,14 @@ class ProgressTracker:
         if self.current_app_start_time:
             install_time = time.time() - self.current_app_start_time
             
+        # Handle different completion statuses
         if success:
-            self.completed_apps += 1
-            status = 'completed'
+            if error_message == "Already installed":
+                status = 'already_installed'
+                self.completed_apps += 1
+            else:
+                status = 'completed'
+                self.completed_apps += 1
         else:
             self.failed_apps += 1
             status = 'failed'
