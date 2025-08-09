@@ -218,7 +218,10 @@ class MainWindow(QMainWindow):
             self.apps_layout.addWidget(group_box)
         
         self.apps_layout.addStretch()
-        self.update_selection_summary()
+        
+        # Initialize selection summary after creating checkboxes
+        if hasattr(self, 'selection_summary'):
+            self.update_selection_summary()
         
     def create_progress_panel(self, parent_splitter):
         """Create the progress and logging panel"""
@@ -312,6 +315,9 @@ class MainWindow(QMainWindow):
             
     def update_selection_summary(self):
         """Update the selection summary label"""
+        if not hasattr(self, 'selection_summary') or not hasattr(self, 'app_checkboxes'):
+            return
+            
         selected_count = sum(1 for cb in self.app_checkboxes.values() if cb.isChecked())
         total_count = len(self.app_checkboxes)
         
