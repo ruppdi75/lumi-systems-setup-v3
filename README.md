@@ -11,6 +11,9 @@
 
 Lumi-Systems Setup V2 is a **complete rewrite** of the original shell-based installation scripts, now featuring a **modern graphical user interface** built with PyQt6. This application provides an intuitive, user-friendly way to install and configure software packages on AnduinOS and compatible Linux systems.
 
+### 🔄 Recent Changes
+- **Spotify Temporarily Disabled** (v2.0.1) - Due to installation issues, Spotify has been temporarily excluded from the setup process. All Spotify-related code has been commented out and can be re-enabled in the future.
+
 ### 🎯 From Command Line to GUI
 
 This version transforms the powerful but terminal-based installation process into a beautiful, modern desktop application with real-time feedback and professional reporting.
@@ -68,7 +71,7 @@ This version transforms the powerful but terminal-based installation process int
 ### 🎮 Entertainment
 - **Steam** - Gaming Platform
 - **Discord** - Communication
-- **Spotify** - Music Streaming
+- **~~Spotify~~** - ⚠️ *Temporarily disabled due to installation issues*
 
 ### 🔧 System Tools
 - **htop** - System Monitor

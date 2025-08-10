@@ -229,7 +229,8 @@ class MainWindow(QMainWindow):
             "🎮 Entertainment": [
                 ("steam", "Steam Gaming Platform", False),
                 ("discord", "Discord Chat", False),
-                ("spotify", "Spotify Music", False),
+                # COMMENTED OUT: Spotify option
+                # ("spotify", "Spotify Music", False),
             ],
             "🔧 System Tools": [
                 ("htop", "System Monitor", True),

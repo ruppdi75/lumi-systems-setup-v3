@@ -188,8 +188,9 @@ class InstallationManager(QObject):
                     if self.is_recoverable_error(step_name, error):
                         self.log_message.emit("WARNING", f"⚠️ {step_name} failed but continuing: {error}")
                         # Try to clean up any problematic repositories
-                        if "apt update" in command.lower() and "spotify" in error.lower():
-                            self.cleanup_spotify_repository()
+                        # COMMENTED OUT: Spotify-related cleanup
+                        # if "apt update" in command.lower() and "spotify" in error.lower():
+                        #     self.cleanup_spotify_repository()
                         continue
                     else:
                         install_time = self.format_time(time.time() - start_time)
@@ -220,27 +221,28 @@ class InstallationManager(QObject):
         
         return False
     
-    def cleanup_spotify_repository(self):
-        """Clean up problematic Spotify repository"""
-        try:
-            self.log_message.emit("INFO", "🔧 Cleaning up Spotify repository...")
-            
-            # Remove problematic Spotify sources
-            cleanup_commands = [
-                'sudo rm -f /etc/apt/sources.list.d/spotify.list',
-                'sudo rm -f /etc/apt/trusted.gpg.d/spotify.gpg',
-                'sudo apt update'
-            ]
-            
-            for cmd in cleanup_commands:
-                success, output, error = self.script_runner.run_command(cmd)
-                if not success and "apt update" not in cmd:
-                    self.log_message.emit("WARNING", f"Cleanup command failed: {cmd}")
-                    
-            self.log_message.emit("INFO", "✅ Spotify repository cleanup completed")
-            
-        except Exception as e:
-            self.log_message.emit("ERROR", f"Failed to cleanup Spotify repository: {e}")
+    # COMMENTED OUT: Spotify repository cleanup method
+    # def cleanup_spotify_repository(self):
+    #     """Clean up problematic Spotify repository"""
+    #     try:
+    #         self.log_message.emit("INFO", "🔧 Cleaning up Spotify repository...")
+    #         
+    #         # Remove problematic Spotify sources
+    #         cleanup_commands = [
+    #             'sudo rm -f /etc/apt/sources.list.d/spotify.list',
+    #             'sudo rm -f /etc/apt/trusted.gpg.d/spotify.gpg',
+    #             'sudo apt update'
+    #         ]
+    #         
+    #         for cmd in cleanup_commands:
+    #             success, output, error = self.script_runner.run_command(cmd)
+    #             if not success and "apt update" not in cmd:
+    #                 self.log_message.emit("WARNING", f"Cleanup command failed: {cmd}")
+    #                 
+    #         self.log_message.emit("INFO", "✅ Spotify repository cleanup completed")
+    #         
+    #     except Exception as e:
+    #         self.log_message.emit("ERROR", f"Failed to cleanup Spotify repository: {e}")
     
     def check_if_installed(self, app_name):
         """Check if an application is already installed"""
@@ -260,7 +262,8 @@ class InstallationManager(QObject):
                 'rustdesk': 'which rustdesk',
                 'steam': 'which steam',
                 'discord': 'flatpak list | grep -i discord',
-                'spotify': 'flatpak list | grep -i spotify',
+                # COMMENTED OUT: Spotify check
+                # 'spotify': 'flatpak list | grep -i spotify',
                 'htop': 'which htop',
                 'curl': 'which curl',
                 'wget': 'which wget',
@@ -345,11 +348,12 @@ class InstallationManager(QObject):
                 ('Download Discord', 'wget -O /tmp/discord.deb "https://discordapp.com/api/download?platform=linux&format=deb"'),
                 ('Install Discord', 'sudo dpkg -i /tmp/discord.deb || sudo apt-get install -f -y'),
             ],
-            'spotify': [
-                ('Install Flatpak if needed', 'sudo apt update && sudo apt install -y flatpak'),
-                ('Add Flathub repository', 'flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo'),
-                ('Install Spotify via Flatpak', 'flatpak install -y flathub com.spotify.Client'),
-            ],
+            # COMMENTED OUT: Spotify installation steps
+            # 'spotify': [
+            #     ('Install Flatpak if needed', 'sudo apt update && sudo apt install -y flatpak'),
+            #     ('Add Flathub repository', 'flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo'),
+            #     ('Install Spotify via Flatpak', 'flatpak install -y flathub com.spotify.Client'),
+            # ],
             'htop': [
                 ('Update package lists', 'sudo apt update'),
                 ('Install htop', 'sudo apt install -y htop'),
