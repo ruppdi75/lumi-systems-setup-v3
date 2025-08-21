@@ -210,6 +210,15 @@ python3 -m pytest
 
 ## 📝 Changelog
 
+### v3.0.1 (2025-08-21)
+
+- 🎨 **Enhanced Update Dialog** - Professional status messages with phased progress reporting
+- 📊 **Detailed Progress Tracking** - 5-phase update verification process with clear indicators
+- 🔍 **Source-Specific Messages** - Tailored status updates for GitHub, APT, Flatpak, and Snap
+- 💎 **Improved UI Styling** - Gradient progress bars and Lumi-Systems branding
+- 📦 **Package List Display** - Shows updated packages in final status message
+- ⚡ **Better User Feedback** - Context-aware completion messages and error handling
+
 ### v3.0.0 (2025-01-21)
 
 - 🔄 **Automatic Update Checking** - Checks all software sources on startup

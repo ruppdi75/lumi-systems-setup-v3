@@ -1,8 +1,12 @@
 {
-  "version": "3.0.0",
-  "release_date": "2025-01-21T20:30:00+02:00",
-  "build_number": 1,
+  "version": "3.0.1",
+  "release_date": "2025-08-21T21:15:00+02:00",
+  "build_number": 2,
   "features": [
+    "Professional phased progress reporting in update dialog",
+    "Source-specific status messages for package types",
+    "Enhanced UI with gradient progress bars",
+    "Package list display in update status",
     "Automatic source version checking on startup",
     "Update manifest generation system",
     "GitHub integration for releases",
