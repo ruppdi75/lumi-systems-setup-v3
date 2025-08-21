@@ -50,80 +50,38 @@ class ScriptRunner(QObject):
                 stdin_input = self.sudo_password + '\n'
             
             # Start process
-            self.current_process = subprocess.Popen(
+            self.process = subprocess.Popen(
                 command,
                 shell=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 stdin=subprocess.PIPE if stdin_input else None,
-                text=True,
+                text=False,  # Use binary mode for better compatibility
                 cwd=cwd,
                 env=env,
-                bufsize=1,
-                universal_newlines=True
+                bufsize=1
             )
             
             # Read output in real-time
-            stdout_lines = []
-            stderr_lines = []
-            
-            # Create threads to read stdout and stderr
-            stdout_queue = queue.Queue()
-            stderr_queue = queue.Queue()
-            
-            def read_stdout():
-                for line in iter(self.current_process.stdout.readline, ''):
-                    stdout_queue.put(line)
-                    self.output_received.emit(line.rstrip())
-                self.current_process.stdout.close()
-                
-            def read_stderr():
-                for line in iter(self.current_process.stderr.readline, ''):
-                    stderr_queue.put(line)
-                    self.error_received.emit(line.rstrip())
-                self.current_process.stderr.close()
-                
-            stdout_thread = threading.Thread(target=read_stdout)
-            stderr_thread = threading.Thread(target=read_stderr)
-            
-            stdout_thread.daemon = True
-            stderr_thread.daemon = True
-            
-            stdout_thread.start()
-            stderr_thread.start()
+            threading.Thread(target=self._read_output).start()
             
             # Send password to stdin if needed for sudo commands
-            if stdin_input:
+            if stdin_input and self.process and self.process.stdin:
                 try:
-                    self.current_process.stdin.write(stdin_input)
-                    self.current_process.stdin.flush()
-                    self.current_process.stdin.close()
+                    self.process.stdin.write(stdin_input.encode('utf-8'))
+                    self.process.stdin.flush()
+                    self.process.stdin.close()
                 except Exception as e:
                     self.logger.warning(f"Failed to send password to stdin: {e}")
             
             # Wait for process to complete
             try:
-                exit_code = self.current_process.wait(timeout=timeout)
+                exit_code = self.process.wait(timeout=timeout)
             except subprocess.TimeoutExpired:
                 self.logger.error(f"Command timed out after {timeout} seconds")
-                self.current_process.kill()
-                self.current_process.wait()
+                self.kill_process()
                 return False, "", f"Command timed out after {timeout} seconds"
                 
-            # Wait for threads to finish
-            stdout_thread.join(timeout=5)
-            stderr_thread.join(timeout=5)
-            
-            # Collect all output
-            while not stdout_queue.empty():
-                stdout_lines.append(stdout_queue.get())
-                
-            while not stderr_queue.empty():
-                stderr_lines.append(stderr_queue.get())
-                
-            stdout_text = ''.join(stdout_lines)
-            stderr_text = ''.join(stderr_lines)
-            
             success = exit_code == 0
             self.command_completed.emit(success, exit_code)
             
@@ -132,7 +90,7 @@ class ScriptRunner(QObject):
             else:
                 self.logger.error(f"Command failed with exit code {exit_code}")
                 
-            return success, stdout_text, stderr_text
+            return success, '\n'.join(self.output_lines), '\n'.join(self.error_lines)
             
         except Exception as e:
             self.logger.error(f"Error executing command: {e}")
@@ -141,7 +99,38 @@ class ScriptRunner(QObject):
             return False, "", str(e)
             
         finally:
-            self.current_process = None
+            self.process = None
+    
+    def _read_output(self):
+        """Read output from process"""
+        try:
+            while self.process and self.process.poll() is None:
+                try:
+                    # Read stdout
+                    if self.process and self.process.stdout:
+                        line = self.process.stdout.readline()
+                        if line:
+                            decoded_line = line.decode('utf-8', errors='replace').rstrip()
+                            self.output_received.emit(decoded_line)
+                            self.output_lines.append(decoded_line)
+                    
+                    # Read stderr
+                    if self.process and self.process.stderr:
+                        line = self.process.stderr.readline()
+                        if line:
+                            decoded_line = line.decode('utf-8', errors='replace').rstrip()
+                            self.error_received.emit(decoded_line)
+                            self.error_lines.append(decoded_line)
+                    
+                    # Small delay to prevent CPU spinning
+                    time.sleep(0.01)
+                except (IOError, OSError) as e:
+                    # Handle pipe errors gracefully
+                    if self.process and self.process.poll() is None:
+                        self.error_received.emit(f"Read error: {str(e)}")
+                    break
+        except Exception as e:
+            self.logger.error(f"Error reading output: {e}")
             
     def run_script(self, script_path, args=None, cwd=None):
         """
@@ -170,16 +159,34 @@ class ScriptRunner(QObject):
             
         return self.run_command(command, cwd=cwd)
         
-    def kill_current_process(self):
-        """Kill the currently running process"""
-        if self.current_process:
+    def kill_process(self):
+        """Kill the running process"""
+        if self.process:
             try:
-                self.current_process.kill()
-                self.current_process.wait()
-                self.logger.info("Current process killed")
-            except Exception as e:
-                self.logger.error(f"Error killing process: {e}")
+                # Try SIGTERM first
+                self.process.terminate()
+                time.sleep(0.5)
                 
+                # If still running, use SIGKILL
+                if self.process.poll() is None:
+                    self.process.kill()
+                    try:
+                        self.process.wait(timeout=2)
+                    except subprocess.TimeoutExpired:
+                        # Force kill if timeout
+                        import os
+                        import signal
+                        os.killpg(os.getpgid(self.process.pid), signal.SIGKILL)
+                
+                self.process = None
+                return True
+            except Exception as e:
+                self.error_received.emit(f"Failed to kill process: {str(e)}")
+                # Try to clean up anyway
+                self.process = None
+                return False
+        return True
+        
     def is_running(self):
         """Check if a process is currently running"""
-        return self.current_process is not None and self.current_process.poll() is None
+        return self.process is not None and self.process.poll() is None

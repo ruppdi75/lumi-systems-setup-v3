@@ -1,12 +1,13 @@
 {
-  "timestamp": "2025-08-21T20:35:23.494360",
+  "timestamp": "2025-08-21T21:05:28.370803",
   "version": "3.0.0",
   "updates_found": 16,
   "updates": {
     "rustdesk": {
+      "type": "github",
+      "repo": "rustdesk/rustdesk",
       "current_version": null,
       "latest_version": "1.4.1",
-      "type": "github",
       "download_urls": {
         "rustdesk-1.4.1-aarch64.deb": "https://github.com/rustdesk/rustdesk/releases/download/1.4.1/rustdesk-1.4.1-aarch64.deb",
         "rustdesk-1.4.1-aarch64.flatpak": "https://github.com/rustdesk/rustdesk/releases/download/1.4.1/rustdesk-1.4.1-aarch64.flatpak",
@@ -16,86 +17,139 @@
         "rustdesk-1.4.1-x86_64.deb": "https://github.com/rustdesk/rustdesk/releases/download/1.4.1/rustdesk-1.4.1-x86_64.deb",
         "rustdesk-1.4.1-x86_64.flatpak": "https://github.com/rustdesk/rustdesk/releases/download/1.4.1/rustdesk-1.4.1-x86_64.flatpak"
       },
-      "release_url": "https://github.com/rustdesk/rustdesk/releases/tag/1.4.1"
+      "last_checked": "2025-08-21T20:52:45.560743",
+      "release_url": "https://github.com/rustdesk/rustdesk/releases/tag/1.4.1",
+      "has_update": true
     },
     "onlyoffice": {
+      "type": "flatpak",
+      "flatpak_id": "org.onlyoffice.desktopeditors",
       "current_version": null,
       "latest_version": "9.0.4",
-      "type": "flatpak"
+      "last_checked": "2025-08-21T20:52:45.560743",
+      "has_update": true
     },
     "thunderbird": {
+      "type": "flatpak",
+      "flatpak_id": "org.mozilla.Thunderbird",
       "current_version": null,
       "latest_version": "140.2.0esr",
-      "type": "flatpak"
+      "last_checked": "2025-08-21T20:52:45.560743",
+      "has_update": true
     },
     "vscode": {
+      "type": "deb",
+      "download_url": "https://code.visualstudio.com/sha/download?build=stable&os=linux-deb-x64",
       "current_version": null,
       "latest_version": "manual_check_required",
-      "type": "deb"
+      "last_checked": "2025-08-21T20:52:45.560743",
+      "has_update": true
     },
     "chrome": {
+      "type": "deb",
+      "repo_url": "https://dl.google.com/linux/chrome/deb/",
+      "package": "google-chrome-stable",
       "current_version": null,
       "latest_version": "manual_check_required",
-      "type": "deb"
+      "last_checked": "2025-08-21T20:52:45.560743",
+      "has_update": true
     },
     "teams": {
+      "type": "deb",
+      "repo_url": "https://packages.microsoft.com/repos/ms-teams",
+      "package": "teams",
       "current_version": null,
       "latest_version": "manual_check_required",
-      "type": "deb"
+      "last_checked": "2025-08-21T20:52:45.560743",
+      "has_update": true
     },
     "discord": {
+      "type": "deb",
+      "download_url": "https://discord.com/api/download?platform=linux&format=deb",
       "current_version": null,
       "latest_version": "manual_check_required",
-      "type": "deb"
+      "last_checked": "2025-08-21T20:52:45.560743",
+      "has_update": true
     },
     "telegram": {
+      "type": "flatpak",
+      "flatpak_id": "org.telegram.desktop",
       "current_version": null,
       "latest_version": "6.0.2",
-      "type": "flatpak"
+      "last_checked": "2025-08-21T20:52:45.560743",
+      "has_update": true
     },
     "spotify": {
+      "type": "snap",
+      "snap_name": "spotify",
       "current_version": null,
       "latest_version": "1.2.63.394.g126b0d89",
-      "type": "snap"
+      "last_checked": "2025-08-21T20:52:45.560743",
+      "has_update": true
     },
     "zoom": {
+      "type": "deb",
+      "download_url": "https://zoom.us/client/latest/zoom_amd64.deb",
       "current_version": null,
       "latest_version": "manual_check_required",
-      "type": "deb"
+      "last_checked": "2025-08-21T20:52:45.560743",
+      "has_update": true
     },
     "anydesk": {
+      "type": "deb",
+      "repo_url": "http://deb.anydesk.com/",
+      "package": "anydesk",
+      "key_url": "https://keys.anydesk.com/repos/DEB-GPG-KEY",
       "current_version": null,
       "latest_version": "manual_check_required",
-      "type": "deb"
+      "last_checked": "2025-08-21T20:52:45.560743",
+      "has_update": true
     },
     "teamviewer": {
+      "type": "deb",
+      "download_url": "https://download.teamviewer.com/download/linux/teamviewer_amd64.deb",
       "current_version": null,
       "latest_version": "manual_check_required",
-      "type": "deb"
+      "last_checked": "2025-08-21T20:52:45.560743",
+      "has_update": true
     },
     "atom": {
+      "type": "github",
+      "repo": "atom/atom",
       "current_version": null,
       "latest_version": "1.60.0",
-      "type": "github",
       "download_urls": {
         "atom-amd64.deb": "https://github.com/atom/atom/releases/download/v1.60.0/atom-amd64.deb"
       },
-      "release_url": "https://github.com/atom/atom/releases/tag/v1.60.0"
+      "last_checked": "2025-08-21T20:52:45.560743",
+      "release_url": "https://github.com/atom/atom/releases/tag/v1.60.0",
+      "has_update": true
     },
     "gitkraken": {
+      "type": "deb",
+      "download_url": "https://release.gitkraken.com/linux/gitkraken-amd64.deb",
       "current_version": null,
       "latest_version": "manual_check_required",
-      "type": "deb"
+      "last_checked": "2025-08-21T20:52:45.560743",
+      "has_update": true
     },
     "postman": {
+      "type": "snap",
+      "snap_name": "postman",
       "current_version": null,
       "latest_version": "11.58.4",
-      "type": "snap"
+      "last_checked": "2025-08-21T20:52:45.560743",
+      "has_update": true
     },
     "nodejs": {
+      "type": "nodesource",
+      "version": "20",
+      "repo_url": "https://deb.nodesource.com/node_20.x",
+      "package": "nodejs",
       "current_version": null,
       "latest_version": "Node.js 20.x LTS",
-      "type": "nodesource"
+      "last_checked": "2025-08-21T20:52:45.560743",
+      "has_update": true
     }
   },
   "source_information": {
@@ -113,7 +167,7 @@
         "rustdesk-1.4.1-x86_64.deb": "https://github.com/rustdesk/rustdesk/releases/download/1.4.1/rustdesk-1.4.1-x86_64.deb",
         "rustdesk-1.4.1-x86_64.flatpak": "https://github.com/rustdesk/rustdesk/releases/download/1.4.1/rustdesk-1.4.1-x86_64.flatpak"
       },
-      "last_checked": "2025-08-21T20:35:16.753394",
+      "last_checked": "2025-08-21T20:52:45.560743",
       "release_url": "https://github.com/rustdesk/rustdesk/releases/tag/1.4.1"
     },
     "microsoft-edge": {
@@ -129,14 +183,14 @@
       "flatpak_id": "org.onlyoffice.desktopeditors",
       "current_version": null,
       "latest_version": "9.0.4",
-      "last_checked": "2025-08-21T20:35:16.753394"
+      "last_checked": "2025-08-21T20:52:45.560743"
     },
     "thunderbird": {
       "type": "flatpak",
       "flatpak_id": "org.mozilla.Thunderbird",
       "current_version": null,
       "latest_version": "140.2.0esr",
-      "last_checked": "2025-08-21T20:35:16.753394"
+      "last_checked": "2025-08-21T20:52:45.560743"
     },
     "vlc": {
       "type": "apt",
@@ -157,7 +211,7 @@
       "download_url": "https://code.visualstudio.com/sha/download?build=stable&os=linux-deb-x64",
       "current_version": null,
       "latest_version": "manual_check_required",
-      "last_checked": "2025-08-21T20:35:16.753394"
+      "last_checked": "2025-08-21T20:52:45.560743"
     },
     "chrome": {
       "type": "deb",
@@ -165,7 +219,7 @@
       "package": "google-chrome-stable",
       "current_version": null,
       "latest_version": "manual_check_required",
-      "last_checked": "2025-08-21T20:35:16.753394"
+      "last_checked": "2025-08-21T20:52:45.560743"
     },
     "teams": {
       "type": "deb",
@@ -173,14 +227,14 @@
       "package": "teams",
       "current_version": null,
       "latest_version": "manual_check_required",
-      "last_checked": "2025-08-21T20:35:16.753394"
+      "last_checked": "2025-08-21T20:52:45.560743"
     },
     "discord": {
       "type": "deb",
       "download_url": "https://discord.com/api/download?platform=linux&format=deb",
       "current_version": null,
       "latest_version": "manual_check_required",
-      "last_checked": "2025-08-21T20:35:16.753394"
+      "last_checked": "2025-08-21T20:52:45.560743"
     },
     "signal": {
       "type": "apt",
@@ -196,21 +250,21 @@
       "flatpak_id": "org.telegram.desktop",
       "current_version": null,
       "latest_version": "6.0.2",
-      "last_checked": "2025-08-21T20:35:16.753394"
+      "last_checked": "2025-08-21T20:52:45.560743"
     },
     "spotify": {
       "type": "snap",
       "snap_name": "spotify",
       "current_version": null,
       "latest_version": "1.2.63.394.g126b0d89",
-      "last_checked": "2025-08-21T20:35:16.753394"
+      "last_checked": "2025-08-21T20:52:45.560743"
     },
     "zoom": {
       "type": "deb",
       "download_url": "https://zoom.us/client/latest/zoom_amd64.deb",
       "current_version": null,
       "latest_version": "manual_check_required",
-      "last_checked": "2025-08-21T20:35:16.753394"
+      "last_checked": "2025-08-21T20:52:45.560743"
     },
     "anydesk": {
       "type": "deb",
@@ -219,14 +273,14 @@
       "key_url": "https://keys.anydesk.com/repos/DEB-GPG-KEY",
       "current_version": null,
       "latest_version": "manual_check_required",
-      "last_checked": "2025-08-21T20:35:16.753394"
+      "last_checked": "2025-08-21T20:52:45.560743"
     },
     "teamviewer": {
       "type": "deb",
       "download_url": "https://download.teamviewer.com/download/linux/teamviewer_amd64.deb",
       "current_version": null,
       "latest_version": "manual_check_required",
-      "last_checked": "2025-08-21T20:35:16.753394"
+      "last_checked": "2025-08-21T20:52:45.560743"
     },
     "brave": {
       "type": "apt",
@@ -272,7 +326,7 @@
       "download_urls": {
         "atom-amd64.deb": "https://github.com/atom/atom/releases/download/v1.60.0/atom-amd64.deb"
       },
-      "last_checked": "2025-08-21T20:35:16.753394",
+      "last_checked": "2025-08-21T20:52:45.560743",
       "release_url": "https://github.com/atom/atom/releases/tag/v1.60.0"
     },
     "gitkraken": {
@@ -280,14 +334,14 @@
       "download_url": "https://release.gitkraken.com/linux/gitkraken-amd64.deb",
       "current_version": null,
       "latest_version": "manual_check_required",
-      "last_checked": "2025-08-21T20:35:16.753394"
+      "last_checked": "2025-08-21T20:52:45.560743"
     },
     "postman": {
       "type": "snap",
       "snap_name": "postman",
       "current_version": null,
       "latest_version": "11.58.4",
-      "last_checked": "2025-08-21T20:35:16.753394"
+      "last_checked": "2025-08-21T20:52:45.560743"
     },
     "docker": {
       "type": "apt",
@@ -305,7 +359,7 @@
       "package": "nodejs",
       "current_version": null,
       "latest_version": "Node.js 20.x LTS",
-      "last_checked": "2025-08-21T20:35:16.753394"
+      "last_checked": "2025-08-21T20:52:45.560743"
     }
   },
   "actions_required": [

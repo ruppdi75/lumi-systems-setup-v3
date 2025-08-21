@@ -113,13 +113,9 @@ class InstallationManager(QObject):
                     'details': 'Application is already installed'
                 }
                 self.results['applications'].append(app_result)
-                
-                # Update progress tracker
                 self.progress_tracker.complete_app_installation(app_name, True, "Already installed")
-                self.log_message.emit("INFO", f"ℹ️ {app_name} is already installed - skipping")
-                
-                # Force progress update
-                self.update_progress_display()
+                self.log_message.emit("INFO", f"✅ {app_name} is already installed")
+                self.status_updated.emit(f"{app_name}: Already installed")
                 continue
             
             # Install the application
@@ -392,7 +388,15 @@ class InstallationManager(QObject):
             self.results['total_time'] = self.format_timedelta(total_time)
             
         self.is_running = False
-        self.progress_timer.stop()
+        
+        # Stop progress timer safely
+        if hasattr(self, 'progress_timer'):
+            self.progress_timer.stop()
+            
+        # Clean up script runner
+        if self.script_runner:
+            self.script_runner.deleteLater()
+            self.script_runner = None
         
         self.log_message.emit("INFO", "Installation process completed")
         self.status_updated.emit("Installation completed")
@@ -412,8 +416,23 @@ class InstallationManager(QObject):
         
     def stop_installation(self):
         """Stop the installation process"""
+        self.logger.info("Stopping installation process...")
         self.should_stop = True
+        self.is_running = False
         self.is_paused = False
+        
+        # Kill any running process
+        if self.script_runner:
+            self.script_runner.kill_process()
+            # Clean up script runner
+            self.script_runner.deleteLater()
+            self.script_runner = None
+            
+        # Stop progress timer
+        if hasattr(self, 'progress_timer'):
+            self.progress_timer.stop()
+            
+        self.status_updated.emit("Installation stopped")
         self.log_message.emit("WARNING", "Installation stopped by user")
         
     def update_progress_display(self):

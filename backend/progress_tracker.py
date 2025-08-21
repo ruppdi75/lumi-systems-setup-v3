@@ -12,6 +12,7 @@ class ProgressTracker:
         self.total_apps = 0
         self.completed_apps = 0
         self.failed_apps = 0
+        self.already_installed_apps = 0
         self.current_app = ""
         self.current_step = ""
         self.current_app_progress = 0
@@ -65,7 +66,7 @@ class ProgressTracker:
         if success:
             if error_message == "Already installed":
                 status = 'already_installed'
-                self.completed_apps += 1
+                self.already_installed_apps += 1
             else:
                 status = 'completed'
                 self.completed_apps += 1
@@ -81,7 +82,8 @@ class ProgressTracker:
         }
         
         # Update overall progress
-        self.overall_progress = int((self.completed_apps + self.failed_apps) / self.total_apps * 100)
+        total_processed = self.completed_apps + self.failed_apps + self.already_installed_apps
+        self.overall_progress = int(total_processed / self.total_apps * 100)
         
         # Update installation steps
         if self.installation_steps:
@@ -95,24 +97,29 @@ class ProgressTracker:
         
     def get_progress_data(self):
         """Get current progress data for UI updates"""
+        total_processed = self.completed_apps + self.failed_apps + self.already_installed_apps
         return {
             'overall_progress': self.overall_progress,
-            'overall_label': f"Installing applications... ({self.completed_apps + self.failed_apps}/{self.total_apps})",
+            'overall_label': f"Installing applications... ({total_processed}/{self.total_apps})",
             'current_app': self.current_app,
             'current_step': self.current_step,
             'current_progress': self.current_app_progress,
             'completed_apps': self.completed_apps,
             'failed_apps': self.failed_apps,
+            'already_installed_apps': self.already_installed_apps,
             'total_apps': self.total_apps,
             'installation_steps': self.installation_steps[-10:]  # Show last 10 steps
         }
         
     def get_statistics(self):
         """Get installation statistics"""
+        # Success rate includes both completed and already installed
+        successful_apps = self.completed_apps + self.already_installed_apps
         return {
             'total_apps': self.total_apps,
             'completed_apps': self.completed_apps,
             'failed_apps': self.failed_apps,
-            'success_rate': (self.completed_apps / self.total_apps * 100) if self.total_apps > 0 else 0,
+            'already_installed_apps': self.already_installed_apps,
+            'success_rate': (successful_apps / self.total_apps * 100) if self.total_apps > 0 else 0,
             'app_results': self.app_results
         }

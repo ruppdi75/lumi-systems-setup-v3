@@ -95,11 +95,13 @@ class ProgressWidget(QWidget):
         
         self.apps_completed_label = QLabel("Completed: 0")
         self.apps_failed_label = QLabel("Failed: 0")
+        self.apps_already_installed_label = QLabel("Already Installed: 0")
         self.apps_remaining_label = QLabel("Remaining: 0")
         self.time_elapsed_label = QLabel("Time: 00:00")
         
         stats_info_layout.addWidget(self.apps_completed_label)
         stats_info_layout.addWidget(self.apps_failed_label)
+        stats_info_layout.addWidget(self.apps_already_installed_label)
         stats_info_layout.addWidget(self.apps_remaining_label)
         stats_info_layout.addStretch()
         stats_info_layout.addWidget(self.time_elapsed_label)
@@ -141,9 +143,18 @@ class ProgressWidget(QWidget):
             failed_count = progress_data['failed_apps']
             self.apps_failed_label.setText(f"Failed: {failed_count}")
             
+        if 'already_installed_apps' in progress_data:
+            already_installed_count = progress_data['already_installed_apps']
+            self.apps_already_installed_label.setText(f"Already Installed: {already_installed_count}")
+            
         if 'total_apps' in progress_data:
             self.total_apps = progress_data['total_apps']
-            remaining = self.total_apps - self.completed_apps
+            # Calculate remaining based on all processed apps
+            completed = progress_data.get('completed_apps', 0)
+            failed = progress_data.get('failed_apps', 0)
+            already_installed = progress_data.get('already_installed_apps', 0)
+            processed = completed + failed + already_installed
+            remaining = self.total_apps - processed
             self.apps_remaining_label.setText(f"Remaining: {remaining}")
             
         if 'time_elapsed' in progress_data:
@@ -155,16 +166,19 @@ class ProgressWidget(QWidget):
             
     def update_installation_steps(self, steps):
         """Update the installation steps display"""
-        # Clear existing steps
-        for i in reversed(range(self.steps_layout.count())):
-            child = self.steps_layout.itemAt(i).widget()
-            if child:
-                child.setParent(None)
-                
-        # Add new steps
-        for step in steps:
-            step_widget = self.create_step_widget(step)
-            self.steps_layout.addWidget(step_widget)
+        try:
+            # Clear existing steps
+            for i in reversed(range(self.steps_layout.count())):
+                child = self.steps_layout.itemAt(i).widget()
+                if child:
+                    child.deleteLater()
+                    
+            # Add new steps
+            for step in steps:
+                step_widget = self.create_step_widget(step)
+                self.steps_layout.addWidget(step_widget)
+        except Exception as e:
+            print(f"Error updating installation steps: {e}")
             
     def create_step_widget(self, step_data):
         """Create a widget for displaying a single installation step"""
@@ -177,6 +191,9 @@ class ProgressWidget(QWidget):
         if status == 'completed':
             icon = "✅"
             color = "#0d7377"
+        elif status == 'already_installed':
+            icon = "ℹ️"
+            color = "#17a2b8"  # Info blue for already installed
         elif status == 'running':
             icon = "🔄"
             color = "#ff9500"
@@ -209,18 +226,22 @@ class ProgressWidget(QWidget):
         
     def reset_progress(self):
         """Reset all progress indicators"""
-        self.overall_progress.setValue(0)
-        self.current_progress.setValue(0)
-        self.overall_label.setText("Ready to start installation...")
-        self.current_app_label.setText("No application currently being installed")
-        self.current_step_label.setText("Waiting to start...")
-        self.apps_completed_label.setText("Completed: 0")
-        self.apps_failed_label.setText("Failed: 0")
-        self.apps_remaining_label.setText("Remaining: 0")
-        self.time_elapsed_label.setText("Time: 00:00")
-        
-        # Clear steps
-        for i in reversed(range(self.steps_layout.count())):
-            child = self.steps_layout.itemAt(i).widget()
-            if child:
-                child.setParent(None)
+        try:
+            self.overall_progress.setValue(0)
+            self.current_progress.setValue(0)
+            self.overall_label.setText("Ready to start installation...")
+            self.current_app_label.setText("No application currently being installed")
+            self.current_step_label.setText("Waiting to start...")
+            self.apps_completed_label.setText("Completed: 0")
+            self.apps_failed_label.setText("Failed: 0")
+            self.apps_already_installed_label.setText("Already Installed: 0")
+            self.apps_remaining_label.setText("Remaining: 0")
+            self.time_elapsed_label.setText("Time: 00:00")
+            
+            # Clear steps
+            for i in reversed(range(self.steps_layout.count())):
+                child = self.steps_layout.itemAt(i).widget()
+                if child:
+                    child.deleteLater()
+        except Exception as e:
+            print(f"Error resetting progress: {e}")

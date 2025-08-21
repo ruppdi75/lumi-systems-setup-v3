@@ -4,12 +4,11 @@ Source Checker Module - Checks for updates to software sources
 """
 
 import json
-import re
-import requests
 import logging
-from typing import Dict, List, Optional, Tuple
+import requests
 from datetime import datetime
 from pathlib import Path
+from typing import Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +19,24 @@ class SourceChecker:
         self.manifest_dir = manifest_dir
         self.manifest_dir.mkdir(parents=True, exist_ok=True)
         self.sources_file = manifest_dir / "sources.json"
-        self.current_sources = self._load_current_sources()
+        self.current_sources = {}
+        self.sources = {}
+    
+    def load_sources(self, sources_file: str):
+        """Load sources from a JSON file"""
+        try:
+            with open(sources_file, 'r') as f:
+                self.sources = json.load(f)
+                self.current_sources = self.sources.copy()
+                logger.info(f"Loaded {len(self.sources)} sources from {sources_file}")
+        except FileNotFoundError:
+            logger.warning(f"Sources file not found: {sources_file}, using defaults")
+            self.sources = self._initialize_sources()
+            self.current_sources = self.sources.copy()
+        except Exception as e:
+            logger.error(f"Error loading sources: {e}")
+            self.sources = self._initialize_sources()
+            self.current_sources = self.sources.copy()
         
     def _load_current_sources(self) -> Dict:
         """Load current sources from manifest"""
@@ -314,13 +330,9 @@ class SourceChecker:
             logger.error(f"Error checking Snap package {snap_name}: {e}")
         return None
     
-    def check_all_sources(self) -> Dict[str, Dict]:
-        """Check all sources for updates"""
-        updates = {}
-        timestamp = datetime.now().isoformat()
-        
-        for app_name, source_info in self.current_sources.items():
-            logger.info(f"Checking {app_name}...")
+    def check_source(self, app_name: str, source_info: Dict) -> Optional[Dict]:
+        """Check a single source for updates"""
+        try:
             source_type = source_info.get('type')
             latest_version = None
             additional_info = {}
@@ -361,23 +373,32 @@ class SourceChecker:
                 version = source_info.get('version')
                 latest_version = f"Node.js {version}.x LTS"
             
-            # Check if there's an update
-            if latest_version and latest_version != source_info.get('current_version'):
-                updates[app_name] = {
-                    'current_version': source_info.get('current_version'),
-                    'latest_version': latest_version,
-                    'type': source_type,
-                    **additional_info
-                }
-                
-                # Update the source info
-                self.current_sources[app_name]['latest_version'] = latest_version
-                self.current_sources[app_name]['last_checked'] = timestamp
+            # Return updated source info if version found
+            if latest_version:
+                result = source_info.copy()
+                result['latest_version'] = latest_version
+                result['has_update'] = latest_version != source_info.get('current_version')
                 if additional_info:
-                    self.current_sources[app_name].update(additional_info)
+                    result.update(additional_info)
+                return result
+                
+        except Exception as e:
+            logger.error(f"Error checking source {app_name}: {e}")
         
-        # Save updated sources
-        self._save_sources()
+        return None
+    
+    def check_all_sources(self) -> Dict:
+        """Check all configured sources for updates"""
+        updates = {}
+        timestamp = datetime.now().isoformat()
+        
+        logger.info(f"Checking {len(self.sources)} sources for updates...")
+        
+        for app_name, source_info in self.sources.items():
+            logger.info(f"Checking {app_name}...")
+            result = self.check_source(app_name, source_info)
+            if result and result.get('has_update'):
+                updates[app_name] = result
         
         return updates
     
