@@ -13,6 +13,7 @@ from PyQt6.QtGui import QFont, QPixmap, QAction
 from .progress_widget import ProgressWidget
 from .log_widget import LogWidget
 from .results_widget import ResultsWidget
+from .update_widget import UpdateWidget
 from .password_dialog import get_sudo_password
 from backend.installer import InstallationManager
 
@@ -31,7 +32,7 @@ class MainWindow(QMainWindow):
         
     def init_ui(self):
         """Initialize the user interface"""
-        self.setWindowTitle("Lumi-Setup v2.0 - AnduinOS Software Installer")
+        self.setWindowTitle("Lumi-Setup v3.0 - AnduinOS Software Installer")
         self.setGeometry(100, 100, 1200, 800)
         self.setMinimumSize(800, 600)
         
@@ -70,7 +71,7 @@ class MainWindow(QMainWindow):
         header_layout = QHBoxLayout(header_widget)
         
         # Logo and title
-        title_label = QLabel("🚀 Lumi-Setup v2.0")
+        title_label = QLabel("🚀 Lumi-Setup v3.0")
         title_font = QFont()
         title_font.setPointSize(18)
         title_font.setBold(True)
@@ -290,6 +291,10 @@ class MainWindow(QMainWindow):
         # Results tab
         self.results_widget = ResultsWidget()
         self.tab_widget.addTab(self.results_widget, "✅ Results")
+        
+        # Updates tab
+        self.update_widget = UpdateWidget()
+        self.tab_widget.addTab(self.update_widget, "🔄 Updates")
         
         parent_splitter.addWidget(progress_widget)
         

@@ -1,0 +1,94 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+    
+    - name: Run update check
+      run: |
+        python -c "
+        from pathlib import Path
+        from src.updater import SourceChecker, ManifestGenerator
+        
+        project_root = Path('.')
+        manifest_dir = project_root / 'manifests'
+        log_dir = project_root / 'logs' / 'updates'
+        
+        checker = SourceChecker(manifest_dir)
+        manifest_gen = ManifestGenerator(manifest_dir, log_dir)
+        
+        updates = checker.check_all_sources()
+        if updates:
+            manifest = manifest_gen.generate_manifest(updates, checker.current_sources)
+            print(f'Found {len(updates)} updates')
+        else:
+            print('All sources up to date')
+        "
+    
+    - name: Build executable
+      run: |
+        pyinstaller --onefile \
+          --name lumi-setup \
+          --icon resources/icons/lumi-setup.svg \
+          --add-data "gui:gui" \
+          --add-data "backend:backend" \
+          --add-data "scripts:scripts" \
+          --add-data "utils:utils" \
+          --add-data "resources:resources" \
+          --add-data "src:src" \
+          --add-data "manifests:manifests" \
+          --add-data "version.json:." \
+          --hidden-import PyQt6 \
+          --hidden-import psutil \
+          --hidden-import requests \
+          --hidden-import packaging \
+          --hidden-import distro \
+          main.py
+    
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        body_path: CHANGELOG.md
+        draft: false
+        prerelease: false
+    
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./dist/lumi-setup
+        asset_name: lumi-setup-linux-x64
+        asset_content_type: application/octet-stream
+    
+    - name: Upload Manifests
+      uses: actions/upload-artifact@v3
+      with:
+        name: update-manifests
+        path: manifests/

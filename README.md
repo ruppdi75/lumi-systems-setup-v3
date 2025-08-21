@@ -1,6 +1,6 @@
-# 🚀 Lumi-Systems Setup V2
+# 🚀 Lumi-Systems# Lumi-Setup v3.0 🚀
 
-**Modern PyQt6 GUI Application for AnduinOS Software Installation**
+**Modern PyQt6-based GUI installer for AnduinOS/Linux systems with automatic update checking, professional features, and comprehensive software management.**
 
 [![Python](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://python.org)
 [![PyQt6](https://img.shields.io/badge/PyQt6-6.6%2B-green.svg)](https://pypi.org/project/PyQt6/)
@@ -9,7 +9,7 @@
 
 ## 📋 Overview
 
-Lumi-Systems Setup V2 is a **complete rewrite** of the original shell-based installation scripts, now featuring a **modern graphical user interface** built with PyQt6. This application provides an intuitive, user-friendly way to install and configure software packages on AnduinOS and compatible Linux systems.
+Lumi-Systems# Lumi-Setup v3.0 🚀 is a **complete rewrite** of the original shell-based installation scripts, now featuring a **modern graphical user interface** built with PyQt6. This application provides an intuitive, user-friendly way to install and configure software packages on AnduinOS and compatible Linux systems.
 
 ### 🔄 Recent Changes
 - **Spotify Temporarily Disabled** (v2.0.1) - Due to installation issues, Spotify has been temporarily excluded from the setup process. All Spotify-related code has been commented out and can be re-enabled in the future.
@@ -18,77 +18,25 @@ Lumi-Systems Setup V2 is a **complete rewrite** of the original shell-based inst
 
 This version transforms the powerful but terminal-based installation process into a beautiful, modern desktop application with real-time feedback and professional reporting.
 
-## ✨ Key Features
+## What's New in Version 3.0
 
-### 🎨 **Modern User Interface**
-- **Dark Theme Design** - Professional, eye-friendly interface
-- **Tabbed Layout** - Progress, Logs, and Results in organized tabs
-- **Responsive Design** - Adapts to different screen sizes
-- **Intuitive Controls** - Easy-to-use buttons and checkboxes
+### Automatic Source Updates
 
-### 📊 **Real-time Progress Tracking**
-- **Live Progress Bars** - Overall and per-application progress
-- **Status Updates** - Current installation step display
-- **Time Tracking** - Installation duration and estimates
-- **Statistics Dashboard** - Success/failure counts and rates
+Lumi-Setup now automatically checks for the latest versions of all software it manages:
+- Runs update check on every startup
+- Compares current versions with latest available
+- Generates detailed manifests of all changes
+- Can apply updates directly to installation scripts
 
-### 📝 **Advanced Logging System**
-- **Multi-level Logging** - Debug, Info, Warning, Error levels
-- **Log Filtering** - View specific log levels
-- **Real-time Display** - Live log updates during installation
-- **Export Functionality** - Save logs to file
+### Update Sources Supported
 
-### 🛠️ **Installation Management**
-- **25+ Applications** - Pre-configured popular software
-- **Categorized Selection** - Desktop, Development, Entertainment, System tools
-- **Pause/Resume/Stop** - Full control over installation process
-- **Error Recovery** - Continue installation despite individual failures
-- **Dependency Handling** - Automatic prerequisite installation
+- **GitHub Releases** - Direct API integration
+- **APT Packages** - System package manager
+- **Flatpak Apps** - Flathub repository
+- **Snap Packages** - Snap store
+- **Direct Downloads** - DEB files and archives
 
-### 📄 **Professional Reporting**
-- **Installation Summary** - Complete results overview
-- **HTML Export** - Professional installation reports
-- **Success/Failure Analysis** - Detailed error information
-- **Time Statistics** - Installation duration tracking
-
-## 🖥️ Supported Applications
-
-### 🖥️ Desktop Applications
-- **Firefox** - Web Browser
-- **Thunderbird** - Email Client  
-- **LibreOffice** - Office Suite
-- **GIMP** - Image Editor
-- **VLC** - Media Player
-- **Visual Studio Code** - Code Editor
-
-### 🛠️ Development Tools
-- **Git** - Version Control
-- **Python 3** - Programming Language
-- **Node.js** - JavaScript Runtime
-- **Docker** - Containerization
-- **RustDesk** - Remote Desktop
-
-### 🎮 Entertainment
-- **Steam** - Gaming Platform
-- **Discord** - Communication
-- **~~Spotify~~** - ⚠️ *Temporarily disabled due to installation issues*
-
-### 🔧 System Tools
-- **htop** - System Monitor
-- **curl** - HTTP Client
-- **wget** - File Downloader
-- **zip/unzip** - Archive Tools
-
-## 🔧 System Requirements
-
-- **Operating System**: AnduinOS or compatible Linux distribution
-- **Python**: 3.8 or higher
-- **GUI Framework**: PyQt6
-- **Privileges**: Root access for system installations
-- **Memory**: 512MB RAM minimum
-- **Storage**: 100MB free space
-
-## 📦 Quick Installation
+## Quick Start
 
 ### Method 1: Automated Installation (Recommended)
 
@@ -122,42 +70,48 @@ pip3 install -r requirements.txt
 python3 main.py
 ```
 
-## 📁 Project Structure
+## Development
+
+### Project Structure
 
 ```
-lumi-systems-setup-V2/
-├── main.py                 # 🚀 Application entry point
-├── gui/                    # 🎨 GUI components
-│   ├── __init__.py
-│   ├── main_window.py     # Main application window
-│   ├── progress_widget.py # Progress tracking widget
-│   ├── log_widget.py      # Log display widget
-│   └── results_widget.py  # Results summary widget
-├── backend/               # ⚙️ Backend logic
-│   ├── __init__.py
-│   ├── installer.py       # Installation manager
-│   ├── script_runner.py   # Shell script execution
-│   └── progress_tracker.py # Progress tracking
-├── scripts/               # 📜 Original shell scripts (adapted)
+lumi-setup-v3/
+├── main.py              # Application entry point
+├── gui/                 # PyQt6 GUI components
+│   ├── main_window.py   # Main application window
+│   ├── progress_widget.py
+│   ├── log_widget.py
+│   ├── results_widget.py
+│   └── update_widget.py # NEW: Update dashboard
+├── backend/             # Core logic
+│   ├── installer.py     # Installation manager
+│   ├── script_runner.py # Shell script executor
+│   └── progress_tracker.py
+├── src/updater/         # NEW: Update system
+│   ├── source_checker.py    # Version checking
+│   ├── manifest_generator.py # Manifest creation
+│   └── version_manager.py   # Version control
+├── scripts/             # Installation scripts
+│   ├── setup.sh
 │   ├── software_install.sh
-│   ├── system_config.sh
-│   └── cleanup.sh
-├── resources/             # 🎨 UI resources
-│   ├── icons/
-│   └── styles/
-├── utils/                 # 🔧 Utility functions
-│   ├── __init__.py
+│   └── system_config.sh
+├── manifests/           # Update manifests
+├── logs/updates/        # Update logs
+├── .github/workflows/   # CI/CD pipelines
+│   ├── release.yml
+│   └── update-check.yml
+├── utils/               # Utilities
 │   ├── logger.py
 │   └── config.py
-├── install.sh             # 📦 Automated installation script
-├── requirements.txt       # 📋 Python dependencies
-├── LICENSE               # ⚖️ MIT License
-└── README.md             # 📖 This documentation
+└── resources/           # Assets
+    ├── icons/
+    └── styles/
 ```
 
 ## 🚀 Usage Guide
 
 ### 1. **Launch the Application**
+
 ```bash
 # From command line (after installation)
 lumi-setup
@@ -167,17 +121,20 @@ python3 main.py
 ```
 
 ### 2. **Select Applications**
+
 - Browse through categorized application lists
 - Use **"Select All"**, **"Select None"**, or **"Recommended"** buttons
 - Check individual applications you want to install
 
 ### 3. **Start Installation**
+
 - Click **"🚀 Start Installation"** button
 - Monitor real-time progress in the **Progress** tab
 - View detailed logs in the **Logs** tab
 - Use **Pause/Resume/Stop** controls as needed
 
 ### 4. **Review Results**
+
 - Check the **Results** tab for installation summary
 - Export results to HTML for documentation
 - Review any failed installations and error details
@@ -193,6 +150,7 @@ The application creates a configuration directory at `~/.lumi-setup/` containing
 - `logs/` - Installation logs
 
 ### Customizable Settings:
+
 - **UI Theme** - Dark/Light mode
 - **Log Levels** - Debug verbosity
 - **Installation Options** - Timeouts, retries, parallel installs
@@ -203,6 +161,7 @@ The application creates a configuration directory at `~/.lumi-setup/` containing
 ### Common Issues:
 
 **PyQt6 Import Error:**
+
 ```bash
 # Install PyQt6 system packages
 sudo apt install python3-pyqt6 python3-pyqt6.qtcore python3-pyqt6.qtgui python3-pyqt6.qtwidgets
@@ -212,12 +171,14 @@ pip3 install PyQt6
 ```
 
 **Permission Denied:**
+
 ```bash
 # Run with sudo for system installations
 sudo python3 main.py
 ```
 
 **Missing Dependencies:**
+
 ```bash
 # Install all requirements
 pip3 install -r requirements.txt
@@ -234,6 +195,7 @@ Contributions are welcome! Please:
 5. Open a Pull Request
 
 ### Development Setup:
+
 ```bash
 # Clone for development
 git clone https://github.com/ruppdi75/lumi-systems-setup-V2.git
@@ -248,7 +210,17 @@ python3 -m pytest
 
 ## 📝 Changelog
 
+### v3.0.0 (2025-01-21)
+
+- 🔄 **Automatic Update Checking** - Checks all software sources on startup
+- 📋 **Update Manifest System** - JSON-based tracking of all changes
+- 🎯 **Smart Version Detection** - GitHub API, APT, Flatpak, Snap integration
+- 📊 **Update Dashboard** - Visual interface for managing updates
+- 🔧 **CI/CD Pipeline** - GitHub Actions for automated releases
+- 📝 **Enhanced Logging** - Detailed update and change logs
+
 ### v2.0.0 (2024-08-09)
+
 - 🎉 **Complete GUI rewrite** with PyQt6
 - ✨ **Modern dark theme** interface
 - 📊 **Real-time progress tracking**
@@ -261,6 +233,7 @@ python3 -m pytest
 - 🖥️ **Desktop integration**
 
 ### v1.x
+
 - 📜 Original shell script-based version
 - 🖥️ Terminal-only interface
 - ✅ Basic installation tracking
