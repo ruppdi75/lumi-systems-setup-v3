@@ -101,7 +101,11 @@ class InstallationManager(QObject):
             self.update_progress_display()
             
             # Check if application is already installed
-            is_already_installed = self.check_if_installed(app_name)
+            try:
+                is_already_installed = self.check_if_installed(app_name)
+            except Exception as e:
+                self.log_message.emit("WARNING", f"Could not check if {app_name} is installed: {e}")
+                is_already_installed = False
             
             if is_already_installed:
                 # Mark as already installed
@@ -120,6 +124,15 @@ class InstallationManager(QObject):
             
             # Install the application
             success, error_msg, install_time = self.install_application(app_name, installation_steps.get(app_name, []))
+            
+            # If installation failed on update step, check if app is actually installed
+            if not success and "Update package lists" in error_msg:
+                self.log_message.emit("WARNING", f"Update failed for {app_name}, checking if already installed...")
+                is_installed_after = self.check_if_installed(app_name)
+                if is_installed_after:
+                    success = True
+                    error_msg = None
+                    self.log_message.emit("INFO", f"✅ {app_name} is already installed (verified after update failure)")
             
             # Record result
             app_result = {
@@ -285,64 +298,81 @@ class InstallationManager(QObject):
         """Get installation steps for each application"""
         return {
             'firefox': [
-                ('Update package lists', 'sudo apt update'),
-                ('Install Firefox', 'sudo apt install -y firefox'),
+                ('Update package lists', 'timeout 60 sudo apt update || true'),
+                ('Install Firefox', 'timeout 120 sudo apt install -y firefox'),
             ],
             'thunderbird': [
-                ('Update package lists', 'sudo apt update'),
-                ('Install Thunderbird', 'sudo apt install -y thunderbird'),
+                ('Update package lists', 'timeout 60 sudo apt update || true'),
+                ('Install Thunderbird', 'timeout 120 sudo apt install -y thunderbird'),
             ],
             'libreoffice': [
-                ('Update package lists', 'sudo apt update'),
-                ('Install LibreOffice', 'sudo apt install -y libreoffice'),
+                ('Update package lists', 'timeout 60 sudo apt update || true'),
+                ('Install LibreOffice', 'timeout 180 sudo apt install -y libreoffice'),
             ],
             'gimp': [
-                ('Update package lists', 'sudo apt update'),
-                ('Install GIMP', 'sudo apt install -y gimp'),
+                ('Update package lists', 'timeout 60 sudo apt update || true'),
+                ('Install GIMP', 'timeout 120 sudo apt install -y gimp'),
             ],
             'vlc': [
-                ('Update package lists', 'sudo apt update'),
-                ('Install VLC', 'sudo apt install -y vlc'),
+                ('Update package lists', 'timeout 60 sudo apt update || true'),
+                ('Install VLC', 'timeout 120 sudo apt install -y vlc'),
             ],
             'code': [
-                ('Add Microsoft GPG key', 'wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg'),
-                ('Install GPG key', 'sudo install -o root -g root -m 644 packages.microsoft.gpg /etc/apt/trusted.gpg.d/'),
-                ('Add VS Code repository', 'echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/trusted.gpg.d/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" | sudo tee /etc/apt/sources.list.d/vscode.list'),
-                ('Update package lists', 'sudo apt update'),
-                ('Install VS Code', 'sudo apt install -y code'),
+                ('Install dependencies', 'sudo apt update && sudo apt install -y wget gpg'),
+                ('Add Microsoft GPG key', 'wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /tmp/packages.microsoft.gpg'),
+                ('Install GPG key', 'sudo install -D -o root -g root -m 644 /tmp/packages.microsoft.gpg /etc/apt/keyrings/packages.microsoft.gpg'),
+                ('Add VS Code repository', 'echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" | sudo tee /etc/apt/sources.list.d/vscode.list'),
+                ('Update package lists', 'timeout 60 sudo apt update || true'),
+                ('Install VS Code', 'timeout 120 sudo apt install -y code'),
+                ('Clean up', 'rm -f /tmp/packages.microsoft.gpg'),
             ],
             'git': [
-                ('Update package lists', 'sudo apt update'),
-                ('Install Git', 'sudo apt install -y git'),
+                ('Update package lists', 'timeout 60 sudo apt update || true'),
+                ('Install Git', 'timeout 120 sudo apt install -y git'),
             ],
             'python3': [
-                ('Update package lists', 'sudo apt update'),
-                ('Install Python 3', 'sudo apt install -y python3 python3-pip'),
+                ('Update package lists', 'timeout 60 sudo apt update || true'),
+                ('Install Python 3', 'timeout 120 sudo apt install -y python3 python3-pip python3-venv'),
             ],
             'nodejs': [
-                ('Update package lists', 'sudo apt update'),
-                ('Install Node.js', 'sudo apt install -y nodejs npm'),
+                ('Update package lists', 'timeout 60 sudo apt update || true'),
+                ('Install curl if needed', 'which curl || timeout 60 sudo apt install -y curl'),
+                ('Download NodeSource setup script', 'timeout 30 curl -fsSL https://deb.nodesource.com/setup_lts.x -o /tmp/nodesource_setup.sh'),
+                ('Run NodeSource setup', 'timeout 60 sudo -E bash /tmp/nodesource_setup.sh'),
+                ('Install Node.js', 'timeout 120 sudo apt install -y nodejs'),
+                ('Verify installation', 'node --version && npm --version'),
+                ('Clean up', 'rm -f /tmp/nodesource_setup.sh'),
             ],
             'docker': [
-                ('Update package lists', 'sudo apt update'),
-                ('Install prerequisites', 'sudo apt install -y apt-transport-https ca-certificates curl gnupg lsb-release'),
-                ('Add Docker GPG key', 'curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg'),
-                ('Add Docker repository', 'echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null'),
-                ('Update package lists', 'sudo apt update'),
-                ('Install Docker', 'sudo apt install -y docker-ce docker-ce-cli containerd.io'),
+                ('Update package lists', 'timeout 60 sudo apt update || true'),
+                ('Install prerequisites', 'timeout 120 sudo apt install -y apt-transport-https ca-certificates curl gnupg lsb-release'),
+                ('Create keyrings directory', 'sudo mkdir -p /etc/apt/keyrings'),
+                ('Add Docker GPG key', 'timeout 30 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg'),
+                ('Set key permissions', 'sudo chmod a+r /etc/apt/keyrings/docker.gpg'),
+                ('Add Docker repository', 'echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null'),
+                ('Update package lists', 'timeout 60 sudo apt update || true'),
+                ('Install Docker', 'timeout 180 sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin'),
             ],
             'rustdesk': [
-                ('Download RustDesk', 'wget -O /tmp/rustdesk.deb https://github.com/rustdesk/rustdesk/releases/download/1.2.3/rustdesk-1.2.3-x86_64.deb'),
+                ('Install wget if needed', 'which wget || timeout 60 sudo apt install -y wget'),
+                ('Download RustDesk', 'timeout 60 wget -O /tmp/rustdesk.deb https://github.com/rustdesk/rustdesk/releases/download/1.2.3/rustdesk-1.2.3-x86_64.deb'),
                 ('Install RustDesk', 'sudo dpkg -i /tmp/rustdesk.deb || sudo apt-get install -f -y'),
+                ('Clean up', 'rm -f /tmp/rustdesk.deb'),
             ],
             'steam': [
-                ('Enable multiverse repository', 'sudo add-apt-repository multiverse -y'),
+                ('Enable 32-bit architecture', 'sudo dpkg --add-architecture i386'),
                 ('Update package lists', 'sudo apt update'),
-                ('Install Steam', 'sudo apt install -y steam'),
+                ('Install Steam dependencies', 'sudo apt install -y wget gdebi-core libgl1-mesa-glx:i386'),
+                ('Download Steam installer', 'wget -O /tmp/steam.deb https://cdn.akamai.steamstatic.com/client/installer/steam.deb'),
+                ('Install Steam', 'sudo gdebi -n /tmp/steam.deb || sudo apt-get install -f -y'),
+                ('Clean up', 'rm -f /tmp/steam.deb'),
             ],
             'discord': [
-                ('Download Discord', 'wget -O /tmp/discord.deb "https://discordapp.com/api/download?platform=linux&format=deb"'),
+                ('Install dependencies', 'sudo apt update && sudo apt install -y wget libatomic1 libc++1'),
+                ('Download Discord', 'wget --no-check-certificate --timeout=30 --tries=3 -O /tmp/discord.deb "https://discord.com/api/download?platform=linux&format=deb"'),
                 ('Install Discord', 'sudo dpkg -i /tmp/discord.deb || sudo apt-get install -f -y'),
+                ('Verify installation', 'which discord || echo "Discord installation may require manual intervention"'),
+                ('Clean up', 'rm -f /tmp/discord.deb'),
             ],
             # COMMENTED OUT: Spotify installation steps
             # 'spotify': [
@@ -351,20 +381,20 @@ class InstallationManager(QObject):
             #     ('Install Spotify via Flatpak', 'flatpak install -y flathub com.spotify.Client'),
             # ],
             'htop': [
-                ('Update package lists', 'sudo apt update'),
-                ('Install htop', 'sudo apt install -y htop'),
+                ('Update package lists', 'timeout 60 sudo apt update || true'),
+                ('Install htop', 'timeout 60 sudo apt install -y htop'),
             ],
             'curl': [
-                ('Update package lists', 'sudo apt update'),
-                ('Install curl', 'sudo apt install -y curl'),
+                ('Update package lists', 'timeout 60 sudo apt update || true'),
+                ('Install curl', 'timeout 60 sudo apt install -y curl'),
             ],
             'wget': [
-                ('Update package lists', 'sudo apt update'),
-                ('Install wget', 'sudo apt install -y wget'),
+                ('Update package lists', 'timeout 60 sudo apt update || true'),
+                ('Install wget', 'timeout 60 sudo apt install -y wget'),
             ],
             'zip': [
-                ('Update package lists', 'sudo apt update'),
-                ('Install zip utilities', 'sudo apt install -y zip unzip'),
+                ('Update package lists', 'timeout 60 sudo apt update || true'),
+                ('Install zip utilities', 'timeout 60 sudo apt install -y zip unzip'),
             ],
         }
         

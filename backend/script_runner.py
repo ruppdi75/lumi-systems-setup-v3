@@ -24,7 +24,7 @@ class ScriptRunner(QObject):
         self.sudo_password = sudo_password
         self.current_process = None
         
-    def run_command(self, command, cwd=None, timeout=300):
+    def run_command(self, command, cwd=None, timeout=120):
         """
         Run a shell command and return the result
         
@@ -37,6 +37,10 @@ class ScriptRunner(QObject):
             tuple: (success, stdout, stderr)
         """
         self.logger.debug(f"Executing command: {command}")
+        
+        # Initialize output storage
+        self.output_lines = []
+        self.error_lines = []
         
         try:
             # Prepare environment
@@ -123,6 +127,7 @@ class ScriptRunner(QObject):
                             self.error_lines.append(decoded_line)
                     
                     # Small delay to prevent CPU spinning
+                    import time
                     time.sleep(0.01)
                 except (IOError, OSError) as e:
                     # Handle pipe errors gracefully

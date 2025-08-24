@@ -1,7 +1,7 @@
 {
-  "timestamp": "2025-08-21T21:05:28.370803",
+  "timestamp": "2025-08-24T09:18:54.681652",
   "version": "3.0.0",
-  "updates_found": 16,
+  "updates_found": 14,
   "updates": {
     "rustdesk": {
       "type": "github",
@@ -79,14 +79,6 @@
       "last_checked": "2025-08-21T20:52:45.560743",
       "has_update": true
     },
-    "spotify": {
-      "type": "snap",
-      "snap_name": "spotify",
-      "current_version": null,
-      "latest_version": "1.2.63.394.g126b0d89",
-      "last_checked": "2025-08-21T20:52:45.560743",
-      "has_update": true
-    },
     "zoom": {
       "type": "deb",
       "download_url": "https://zoom.us/client/latest/zoom_amd64.deb",
@@ -130,14 +122,6 @@
       "download_url": "https://release.gitkraken.com/linux/gitkraken-amd64.deb",
       "current_version": null,
       "latest_version": "manual_check_required",
-      "last_checked": "2025-08-21T20:52:45.560743",
-      "has_update": true
-    },
-    "postman": {
-      "type": "snap",
-      "snap_name": "postman",
-      "current_version": null,
-      "latest_version": "11.58.4",
       "last_checked": "2025-08-21T20:52:45.560743",
       "has_update": true
     },
@@ -437,14 +421,6 @@
       "action_details": "Flatpak will auto-update from Flathub"
     },
     {
-      "application": "spotify",
-      "type": "snap",
-      "current_version": null,
-      "new_version": "1.2.63.394.g126b0d89",
-      "action_type": "update",
-      "action_details": "Snap will auto-update"
-    },
-    {
       "application": "zoom",
       "type": "deb",
       "current_version": null,
@@ -486,14 +462,6 @@
       "new_version": "manual_check_required",
       "action_type": "update",
       "action_details": "Update direct download URL if changed"
-    },
-    {
-      "application": "postman",
-      "type": "snap",
-      "current_version": null,
-      "new_version": "11.58.4",
-      "action_type": "update",
-      "action_details": "Snap will auto-update"
     },
     {
       "application": "nodejs",

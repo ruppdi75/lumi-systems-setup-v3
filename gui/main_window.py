@@ -253,8 +253,8 @@ class MainWindow(QMainWindow):
                 checkbox.setChecked(recommended)
                 checkbox.stateChanged.connect(self.update_selection_summary)
                 
-                if recommended:
-                    checkbox.setStyleSheet("font-weight: bold;")
+                # Make all application names bold for consistency
+                checkbox.setStyleSheet("font-weight: bold;")
                 
                 self.app_checkboxes[app_id] = checkbox
                 group_layout.addWidget(checkbox)
