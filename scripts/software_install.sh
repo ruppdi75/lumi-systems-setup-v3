@@ -102,8 +102,78 @@ add_edge_repository() {
     fi
 }
 
-# OnlyOffice will be installed via Flatpak instead of APT
-# No repository setup needed
+# Function to install OnlyOffice
+install_onlyoffice() {
+    log_message "INFO" "Starting OnlyOffice installation"
+    show_progress "onlyoffice" "Installing OnlyOffice Desktop Editors"
+    
+    # Create temporary directory
+    local temp_dir=$(mktemp -d)
+    log_message "INFO" "Created temporary directory: $temp_dir"
+    
+    # Try .deb installation first
+    log_message "INFO" "Attempting to install OnlyOffice via .deb package"
+    
+    # Get the latest .deb download URL
+    local deb_url="https://download.onlyoffice.com/install/desktop/editors/linux/onlyoffice-desktopeditors_amd64.deb"
+    
+    log_message "INFO" "Downloading OnlyOffice .deb package from: $deb_url"
+    if wget -q --timeout=60 "$deb_url" -O "$temp_dir/onlyoffice.deb"; then
+        log_message "INFO" "OnlyOffice .deb package downloaded successfully"
+        
+        # Install the .deb package
+        log_message "INFO" "Installing OnlyOffice .deb package"
+        if dpkg -i "$temp_dir/onlyoffice.deb" 2>/dev/null; then
+            log_message "INFO" "OnlyOffice installed successfully via .deb package"
+            mark_app_success "OnlyOffice (.deb)"
+            rm -rf "$temp_dir"
+            return 0
+        else
+            log_message "WARNING" "Failed to install OnlyOffice .deb package, trying to fix dependencies"
+            
+            # Try to fix dependencies and retry
+            apt-get -f install -y >/dev/null 2>&1
+            if dpkg -i "$temp_dir/onlyoffice.deb" 2>/dev/null; then
+                log_message "INFO" "OnlyOffice installed successfully after fixing dependencies"
+                mark_app_success "OnlyOffice (.deb)"
+                rm -rf "$temp_dir"
+                return 0
+            else
+                log_message "WARNING" "Failed to install OnlyOffice .deb package after fixing dependencies"
+            fi
+        fi
+    else
+        log_message "WARNING" "Failed to download OnlyOffice .deb package"
+    fi
+    
+    # If .deb installation failed, try Flatpak
+    log_message "INFO" "Falling back to Flatpak installation for OnlyOffice"
+    
+    # Check if Flatpak is installed
+    if ! command -v flatpak &>/dev/null; then
+        log_message "WARNING" "Flatpak is not installed, installing it first"
+        apt-get update >/dev/null 2>&1
+        apt-get install -y flatpak >/dev/null 2>&1
+        
+        # Add Flathub repository
+        flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo >/dev/null 2>&1
+    fi
+    
+    # Install OnlyOffice via Flatpak
+    log_message "INFO" "Installing OnlyOffice via Flatpak from Flathub"
+    if flatpak install -y flathub org.onlyoffice.desktopeditors 2>/dev/null; then
+        log_message "INFO" "OnlyOffice installed successfully via Flatpak"
+        mark_app_success "OnlyOffice (Flatpak)"
+        rm -rf "$temp_dir"
+        return 0
+    else
+        log_message "ERROR" "Failed to install OnlyOffice via Flatpak"
+        mark_app_failure "OnlyOffice"
+        rm -rf "$temp_dir"
+        return 1
+    fi
+}
+
 # Function to install RustDesk
 install_rustdesk() {
     # Check if a specific version is requested or use 'latest'
@@ -639,6 +709,12 @@ install_flatpak_apps() {
     
     # Install each Flatpak application
     for app in "${FLATPAK_APPS[@]}"; do
+        # Skip OnlyOffice as it's installed separately
+        if [ "$app" = "org.onlyoffice.desktopeditors" ]; then
+            log_message "INFO" "Skipping OnlyOffice Flatpak installation as it's handled separately"
+            continue
+        fi
+        
         # Skip VLC if it's already installed via APT to avoid duplicate icons
         if [ "$app" = "org.videolan.VLC" ] && dpkg -l | grep -q "^ii\s\+vlc\s\+"; then
             log_message "INFO" "Skipping Flatpak VLC installation as it's already installed via APT"
@@ -704,6 +780,12 @@ install_software() {
     if ! install_rustdesk; then
         log_message "WARNING" "RustDesk installation failed, continuing with other applications"
         mark_app_failed "RustDesk" "Installation failed - continuing with other apps"
+    fi
+    
+    # Install OnlyOffice (with error handling - continues on failure)
+    if ! install_onlyoffice; then
+        log_message "WARNING" "OnlyOffice installation failed, continuing with other applications"
+        mark_app_failed "OnlyOffice" "Installation failed - continuing with other apps"
     fi
     
     # Install APT GUI applications

@@ -362,14 +362,14 @@ class InstallationManager(QObject):
             'steam': [
                 ('Enable 32-bit architecture', 'sudo dpkg --add-architecture i386'),
                 ('Update package lists', 'sudo apt update'),
-                ('Install Steam dependencies', 'sudo apt install -y wget gdebi-core libgl1-mesa-glx:i386'),
+                ('Install Steam dependencies', 'sudo apt install -y wget gdebi-core libgl1:i386 libgl1-mesa-dri:i386'),
                 ('Download Steam installer', 'wget -O /tmp/steam.deb https://cdn.akamai.steamstatic.com/client/installer/steam.deb'),
                 ('Install Steam', 'sudo gdebi -n /tmp/steam.deb || sudo apt-get install -f -y'),
                 ('Clean up', 'rm -f /tmp/steam.deb'),
             ],
             'discord': [
                 ('Install dependencies', 'sudo apt update && sudo apt install -y wget libatomic1 libc++1'),
-                ('Download Discord', 'wget --no-check-certificate --timeout=30 --tries=3 -O /tmp/discord.deb "https://discord.com/api/download?platform=linux&format=deb"'),
+                ('Download Discord', 'timeout 120 wget --no-check-certificate --timeout=30 --tries=3 -O /tmp/discord.deb "https://discord.com/api/download?platform=linux&format=deb"'),
                 ('Install Discord', 'sudo dpkg -i /tmp/discord.deb || sudo apt-get install -f -y'),
                 ('Verify installation', 'which discord || echo "Discord installation may require manual intervention"'),
                 ('Clean up', 'rm -f /tmp/discord.deb'),

@@ -217,6 +217,9 @@ class ResultsWidget(QWidget):
             
             # Details/Error message
             details = app.get('error', app.get('details', 'No additional details'))
+            # Handle None case before checking length
+            if details is None:
+                details = 'No additional details'
             details_item = QTableWidgetItem(details[:100] + "..." if len(details) > 100 else details)
             details_item.setFlags(details_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
             

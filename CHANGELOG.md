@@ -5,6 +5,25 @@ All notable changes to Lumi-Setup will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.2] - 2025-08-28
+
+### Fixed
+- **OnlyOffice Installation**: Implemented dedicated installation function with .deb package priority
+  - Downloads official .deb package from OnlyOffice servers
+  - Automatic fallback to Flatpak if .deb installation fails
+  - Added proper timeout handling (60s) for downloads
+- **Script Runner**: Fixed missing `time` module import causing crashes in kill_process() method
+- **Steam Installation**: Replaced obsolete libgl1-mesa-glx:i386 with libgl1:i386 and libgl1-mesa-dri:i386
+- **Discord Installation**: Added explicit timeout to prevent hanging during download
+
+### Changed
+- Removed OnlyOffice from FLATPAK_APPS arrays to prevent duplicate installation attempts
+- OnlyOffice now installs separately with intelligent fallback mechanism
+
+### Added
+- Test script for OnlyOffice installation verification
+- Improved error handling for package installations
+
 ## [3.0.1] - 2025-08-21
 
 ### Added

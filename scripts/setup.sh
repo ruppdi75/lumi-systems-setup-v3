@@ -355,7 +355,6 @@ if [ ! -f "$SCRIPT_DIR/config.sh" ]; then
         "chat.revolt.RevoltDesktop"
         "com.obsproject.Studio"
         "org.videolan.VLC"
-        "org.onlyoffice.desktopeditors"
     )
     
     RUSTDESK_DEPENDENCIES=(

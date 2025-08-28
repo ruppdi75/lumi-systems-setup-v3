@@ -18,6 +18,14 @@ Lumi-Systems# Lumi-Setup v3.0 🚀 is a **complete rewrite** of the original she
 
 This version transforms the powerful but terminal-based installation process into a beautiful, modern desktop application with real-time feedback and professional reporting.
 
+## What's New in Version 3.0.2
+
+### 🐛 Bug Fixes & Improvements
+- **OnlyOffice Installation**: Now properly installs via .deb package with automatic Flatpak fallback
+- **Script Runner**: Fixed critical import error that caused crashes
+- **Steam Dependencies**: Updated to use current package names
+- **Discord Download**: Added timeout handling to prevent hanging
+
 ## What's New in Version 3.0
 
 ### Automatic Source Updates

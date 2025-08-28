@@ -216,6 +216,7 @@ class MainWindow(QMainWindow):
                 ("firefox", "Firefox Web Browser", True),
                 ("thunderbird", "Thunderbird Email Client", True),
                 ("libreoffice", "LibreOffice Office Suite", True),
+                ("onlyoffice", "OnlyOffice Desktop Editors", False),
                 ("gimp", "GIMP Image Editor", False),
                 ("vlc", "VLC Media Player", True),
                 ("code", "Visual Studio Code", True),

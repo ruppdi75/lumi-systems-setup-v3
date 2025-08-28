@@ -1,7 +1,7 @@
 {
-  "version": "3.0.1",
-  "release_date": "2025-08-21T21:15:00+02:00",
-  "build_number": 2,
+  "version": "3.0.2",
+  "release_date": "2025-08-28T09:42:00+02:00",
+  "build_number": 3,
   "features": [
     "Professional phased progress reporting in update dialog",
     "Source-specific status messages for package types",
@@ -13,6 +13,10 @@
     "CI/CD pipeline support",
     "Enhanced logging system",
     "Script auto-update capability",
-    "Comprehensive update reporting"
+    "Comprehensive update reporting",
+    "Fixed OnlyOffice installation with .deb package priority",
+    "Fixed missing time import in script_runner.py",
+    "Fixed Steam installation dependencies",
+    "Added timeout handling for Discord download"
   ]
 }
