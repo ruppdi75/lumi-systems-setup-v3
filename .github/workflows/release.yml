@@ -6,15 +6,18 @@ on:
       - 'v*'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.10'
     
@@ -34,6 +37,10 @@ jobs:
         manifest_dir = project_root / 'manifests'
         log_dir = project_root / 'logs' / 'updates'
         
+        # Create directories if they don't exist
+        manifest_dir.mkdir(exist_ok=True)
+        log_dir.mkdir(parents=True, exist_ok=True)
+        
         checker = SourceChecker(manifest_dir)
         manifest_gen = ManifestGenerator(manifest_dir, log_dir)
         
@@ -49,7 +56,6 @@ jobs:
       run: |
         pyinstaller --onefile \
           --name lumi-setup \
-          --icon resources/icons/lumi-setup.svg \
           --add-data "gui:gui" \
           --add-data "backend:backend" \
           --add-data "scripts:scripts" \
@@ -65,27 +71,22 @@ jobs:
           --hidden-import distro \
           main.py
     
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Get release info
+      id: get_release
+      run: |
+        echo "TAG_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        echo "RELEASE_NAME=Release ${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+    
+    - name: Create or Update Release
+      uses: softprops/action-gh-release@v1
       with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
+        tag_name: ${{ steps.get_release.outputs.TAG_NAME }}
+        name: ${{ steps.get_release.outputs.RELEASE_NAME }}
         body_path: CHANGELOG.md
         draft: false
         prerelease: false
-    
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./dist/lumi-setup
-        asset_name: lumi-setup-linux-x64
-        asset_content_type: application/octet-stream
+        files: |
+          ./dist/lumi-setup
     
     - name: Upload Manifests
       uses: actions/upload-artifact@v3
